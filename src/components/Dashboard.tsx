@@ -5,14 +5,24 @@ import { signOut } from "firebase/auth";
 import { auth, db, doc, getDoc, collection, addDoc, getDocs } from "../firebaseConfig";
 import TransactionTable from "../components/TransactionTable";
 import TransactionForm from "../components/TransactionForm";
-import { onAuthStateChanged } from "firebase/auth"; // Import this function
+import { onAuthStateChanged } from "firebase/auth";
+
+interface Transaction {
+    id: string;
+    date: string;
+    transaction: string;
+    user: string;
+    amount: string;
+    individualAmount: string;
+    involved: string[];
+    paid: string[];
+    pending: string[];
+}
 
 const Dashboard: React.FC = () => {
     const navigate = useNavigate();
     const [showModal, setShowModal] = useState(false);
-    const [transactions, setTransactions] = useState<
-        { id: string; date: string; transaction: string; user: string; amount: string; involved: string[] }[]
-    >([]);
+    const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [formData, setFormData] = useState({
         date: "",
         transaction: "",
@@ -50,11 +60,39 @@ const Dashboard: React.FC = () => {
             try {
                 const transactionsRef = collection(db, "groups", "no groupcest", "transactions");
                 const querySnapshot = await getDocs(transactionsRef);
-                
-                const fetchedTransactions = querySnapshot.docs.map(doc => ({
-                    id: doc.id, // Firestore Document ID
-                    ...(doc.data() as { date: string; transaction: string; user: string; amount: string; involved: string[] })
-                }));
+
+                const fetchedTransactions: Transaction[] = querySnapshot.docs.map(doc => {
+                    const data = doc.data() as {
+                        date: string;
+                        transaction: string;
+                        user: string;
+                        amount: string;
+                        involved: string[];
+                        individualAmount?: string;
+                        paid?: string[];
+                        pending?: string[];
+                    };
+
+                    // If individualAmount is not stored, compute it.
+                    const involvedCount = data.involved.length;
+                    const individualAmount = data.individualAmount
+                        ? data.individualAmount
+                        : involvedCount > 0
+                        ? (parseFloat(data.amount) / involvedCount).toFixed(2)
+                        : "0.00";
+
+                    return {
+                        id: doc.id,
+                        date: data.date,
+                        transaction: data.transaction,
+                        user: data.user,
+                        amount: data.amount,
+                        individualAmount,
+                        involved: data.involved,
+                        paid: data.paid || [],
+                        pending: data.pending || [],
+                    };
+                });
 
                 setTransactions(fetchedTransactions);
             } catch (error) {
@@ -65,7 +103,7 @@ const Dashboard: React.FC = () => {
         fetchTransactions();
     }, []);
 
-
+    // Listen to Auth State to autofill the user field
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (user) => {
             if (user && user.displayName) {
@@ -73,9 +111,13 @@ const Dashboard: React.FC = () => {
                 setFormData(prev => ({ ...prev, user: firstName }));
             }
         });
-    
-        // Cleanup subscription on unmount
         return () => unsubscribe();
+    }, []);
+
+    // Set today's date
+    useEffect(() => {
+        const today = new Date().toISOString().split("T")[0];
+        setFormData(prev => ({ ...prev, date: today }));
     }, []);
 
     const handleSignOut = async () => {
@@ -109,9 +151,16 @@ const Dashboard: React.FC = () => {
             const paid = [frontedBy]; // Fronted person automatically in paid
             const pending = formData.involved.filter(name => name !== frontedBy); // Others in pending
 
+            // Calculate individual amount
+            const involvedCount = [...paid, ...pending].length;
+            const individualAmount = involvedCount > 0
+                ? (parseFloat(formData.amount) / involvedCount).toFixed(2)
+                : "0.00";
+
             const newTransaction = {
                 date: formData.date,
                 amount: formData.amount,
+                individualAmount,
                 transaction: formData.transaction,
                 user: frontedBy,
                 involved: [...paid, ...pending],
@@ -123,12 +172,12 @@ const Dashboard: React.FC = () => {
             const docRef = await addDoc(collection(db, "groups", "no groupcest", "transactions"), newTransaction);
             console.log("Transaction added with ID: ", docRef.id);
 
-            // Ensure local state also includes the `id`
+            // Update local state with the new transaction including its id.
             setTransactions(prev => [
                 ...prev,
                 {
                     ...newTransaction,
-                    id: docRef.id, // Add Firestore-generated ID
+                    id: docRef.id,
                 }
             ]);
 
@@ -140,8 +189,11 @@ const Dashboard: React.FC = () => {
     };
 
     return (
-        <Container className="d-flex flex-column align-items-center justify-content-start vh-100 mt-4 w-100">
-            <h1 className="mb-4">Dashboard</h1> {/* Shifted to the top */}
+        <Container
+            className="d-flex flex-column align-items-center justify-content-start vh-100 mt-4"
+            style={{ width: "100vw", maxWidth: "100%" }}
+        >
+            <h1 className="mb-4">Dashboard</h1>
 
             <Card className="p-4 shadow-lg text-center w-100">
                 <p>Welcome to No Groupcest!</p>
@@ -178,6 +230,6 @@ const Dashboard: React.FC = () => {
             </Modal>
         </Container>
     );
-}
+};
 
 export default Dashboard;

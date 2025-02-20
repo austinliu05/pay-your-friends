@@ -18,6 +18,12 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
     onSubmit,
     onCancel,
 }) => {
+    // Calculate the individual amount: total amount divided by (number of friends involved + 1 for the fronted person)
+    const individualAmount =
+        formData.amount && !isNaN(parseFloat(formData.amount))
+            ? (parseFloat(formData.amount) / (formData.involved.length + 1)).toFixed(2)
+            : "0.00";
+
     return (
         <Form>
             <Form.Group className="mb-3">
@@ -55,7 +61,22 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
 
             <Form.Group className="mb-3">
                 <Form.Label>Amount ($)</Form.Label>
-                <Form.Control type="number" name="amount" value={formData.amount} onChange={onInputChange as React.ChangeEventHandler<any>} />
+                <Form.Control
+                    type="number"
+                    name="amount"
+                    value={formData.amount}
+                    onChange={onInputChange as React.ChangeEventHandler<any>}
+                />
+            </Form.Group>
+
+            <Form.Group className="mb-3">
+                <Form.Label>Individual Amount ($)</Form.Label>
+                <Form.Control
+                    type="text"
+                    name="individualAmount"
+                    value={individualAmount}
+                    disabled
+                />
             </Form.Group>
 
             <Form.Group className="mb-3">
