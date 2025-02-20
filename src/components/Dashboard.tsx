@@ -12,6 +12,7 @@ import {
 } from "../firebaseConfig";
 import TransactionTable from "../components/TransactionTable";
 import TransactionForm from "../components/TransactionForm";
+import Analytics from "./Analytics";
 
 interface Transaction {
     id: string;
@@ -195,6 +196,7 @@ const Dashboard: React.FC = () => {
                 amount: "",
                 involved: [],
             }));
+            window.location.reload();
         } catch (error) {
             console.error("Error adding transaction:", error);
         }
@@ -209,7 +211,7 @@ const Dashboard: React.FC = () => {
             >
                 <h1 className="mb-4">Dashboard</h1>
                 <Card className="p-4 shadow-lg text-center">
-                    <p>Welcome to the Payment Tracker!</p>
+                    <p>Welcome to No Groupcest!</p>
                     <Button variant="primary" className="mb-3" onClick={() => setShowModal(true)}>
                         Add Transaction
                     </Button>
@@ -245,6 +247,7 @@ const Dashboard: React.FC = () => {
             <Container className="mt-4" style={{ width: "100vw", maxWidth: "100%" }}>
                 <TransactionTable transactions={transactions} names={names} />
             </Container>
+            <Analytics/>
         </>
     );
 };
