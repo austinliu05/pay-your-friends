@@ -92,30 +92,30 @@ const TransactionTable: React.FC<TransactionTableProps> = ({ transactions, names
                 hover
                 responsive
                 style={{
-                    tableLayout: "fixed",
                     width: "100%",
                     minWidth: "1000px", // Set minimum width to 1000px
+                    fontSize: "clamp(0.5rem, 0.8rem, 1rem)" // Responsive font size
                 }}
             >
                 <thead>
                     <tr>
-                        <th style={{ width: "12%" }}>Date</th>
-                        <th style={{ width: "40%" }}>Transaction</th>
-                        <th style={{ width: "10%" }}>Total ($)</th>
-                        <th style={{ width: "10%" }}>Individual ($)</th>
-                        <th style={{ width: "15%" }}>Fronted</th>
+                        <th style={{ width: "10%", minWidth: "110px"}}>Date</th>
+                        <th style={{ width: "20%" }}>Transaction</th>
+                        {/* For the amount columns, set a minWidth so the number fits */}
+                        <th style={{ width: "10%", minWidth: "100px" }}>Total ($)</th>
+                        <th style={{ width: "10%", minWidth: "120px" }}>Individual ($)</th>
+                        <th style={{ width: "6%", minWidth: "50px" }}>Fronted</th>
                         {names.map((name, index) => (
                             <th
                                 key={index}
                                 style={{
-                                    width: "10%",
+                                    width: "80px",
                                     whiteSpace: "nowrap",
                                     overflow: "hidden",
                                     textOverflow: "ellipsis",
                                     cursor: "pointer",
                                 }}
                             >
-                                {/* Wrap the header text in an OverlayTrigger for a tooltip */}
                                 <OverlayTrigger
                                     placement="top"
                                     delay={{ show: 250, hide: 400 }}
@@ -134,7 +134,6 @@ const TransactionTable: React.FC<TransactionTableProps> = ({ transactions, names
                             <td>{row.date}</td>
                             <td>
                                 {row.transaction}
-                                {/* If the current user is the fronted person, display a delete (×) icon */}
                                 {row.user === currentUser && (
                                     <span
                                         style={{
@@ -150,8 +149,9 @@ const TransactionTable: React.FC<TransactionTableProps> = ({ transactions, names
                                     </span>
                                 )}
                             </td>
-                            <td>${row.amount}</td>
-                            <td>${row.individualAmount}</td>
+                            {/* Amount and individual amount cells: remove overflow and text ellipsis */}
+                            <td style={{ minWidth: "80px", whiteSpace: "nowrap" }}>${row.amount}</td>
+                            <td style={{ minWidth: "80px", whiteSpace: "nowrap" }}>${row.individualAmount}</td>
                             <td>{row.user}</td>
                             {names.map((name, idx) => {
                                 const isFrontedPerson = row.user === name;
@@ -167,15 +167,12 @@ const TransactionTable: React.FC<TransactionTableProps> = ({ transactions, names
                                                     ? "pointer"
                                                     : "default",
                                             backgroundColor: isPaid
-                                                ? "#d4edda" // Light green for paid
+                                                ? "#d4edda"
                                                 : isPending
-                                                ? "#fff3cd" // Light yellow for pending
+                                                ? "#fff3cd"
                                                 : "inherit",
                                             whiteSpace: "nowrap",
-                                            overflow: "hidden",
-                                            textOverflow: "ellipsis",
                                         }}
-                                        // Wrap the cell content in an OverlayTrigger for a tooltip
                                         onClick={() => {
                                             if (
                                                 row.user === currentUser &&
@@ -193,7 +190,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({ transactions, names
                                             trigger={['hover', 'focus', 'click']}
                                         >
                                             <div>
-                                                {isPaid ? "✔️" : isPending ? "Pending" : ""}
+                                                {isPaid ? "✔️" : isPending ? "⚠️" : ""}
                                             </div>
                                         </OverlayTrigger>
                                     </td>
