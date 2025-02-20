@@ -208,7 +208,7 @@ const Dashboard: React.FC = () => {
                 style={{ width: "100vw", maxWidth: "100%" }}
             >
                 <h1 className="mb-4">Dashboard</h1>
-                <Card className="p-4 shadow-lg text-center w-100">
+                <Card className="p-4 shadow-lg text-center">
                     <p>Welcome to the Payment Tracker!</p>
                     <Button variant="primary" className="mb-3" onClick={() => setShowModal(true)}>
                         Add Transaction
