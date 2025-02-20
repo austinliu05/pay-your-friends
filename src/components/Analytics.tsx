@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Container, Row, Col, Card, Spinner } from "react-bootstrap";
+import { Container, Row, Col, Card, Spinner, Button } from "react-bootstrap";
+import { useNavigate } from "react-router-dom";
 import { db, collection, getDocs } from "../firebaseConfig";
 import { Pie } from "react-chartjs-2";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
@@ -25,6 +26,7 @@ interface UserAnalytics {
 }
 
 const Analytics: React.FC = () => {
+    const navigate = useNavigate();
     const [analytics, setAnalytics] = useState<UserAnalytics[]>([]);
     const [incompleteMap, setIncompleteMap] = useState<{ [key: string]: number }>({});
     const [totalIncomplete, setTotalIncomplete] = useState<number>(0);
@@ -159,6 +161,10 @@ const Analytics: React.FC = () => {
 
     return (
         <Container className="py-4">
+            {/* Back Button */}
+            <Button variant="secondary" onClick={() => navigate("/dashboard")} className="mb-4">
+                Back to Dashboard
+            </Button>
             <h2 className="text-center mb-4">Analytics</h2>
             {loading ? (
                 <div className="d-flex justify-content-center align-items-center" style={{ height: "50vh" }}>

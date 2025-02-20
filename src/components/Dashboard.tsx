@@ -12,7 +12,8 @@ import {
 } from "../firebaseConfig";
 import TransactionTable from "../components/TransactionTable";
 import TransactionForm from "../components/TransactionForm";
-import Analytics from "./Analytics";
+// Removed direct Analytics import since we are now routing to it
+// import Analytics from "./Analytics";
 
 interface Transaction {
     id: string;
@@ -215,6 +216,10 @@ const Dashboard: React.FC = () => {
                     <Button variant="primary" className="mb-3" onClick={() => setShowModal(true)}>
                         Add Transaction
                     </Button>
+                    {/* New Button to Route to Analytics */}
+                    <Button variant="info" onClick={() => navigate("/analytics")} className="mb-3">
+                        View Analytics
+                    </Button>
                     <Button variant="danger" onClick={handleSignOut} className="mb-3">
                         Sign Out
                     </Button>
@@ -247,7 +252,6 @@ const Dashboard: React.FC = () => {
             <Container className="mt-4" style={{ width: "100vw", maxWidth: "100%" }}>
                 <TransactionTable transactions={transactions} names={names} />
             </Container>
-            <Analytics/>
         </>
     );
 };
