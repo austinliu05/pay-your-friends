@@ -1,11 +1,17 @@
 import React, { useState, useEffect } from "react";
 import { Container, Card, Button, Modal, Spinner } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
-import { signOut } from "firebase/auth";
-import { auth, db, doc, getDoc, collection, addDoc, getDocs } from "../firebaseConfig";
+import { signOut, onAuthStateChanged } from "firebase/auth";
+import {
+    auth,
+    db,
+    doc,
+    collection,
+    addDoc,
+    getDocs,
+} from "../firebaseConfig";
 import TransactionTable from "../components/TransactionTable";
 import TransactionForm from "../components/TransactionForm";
-import { onAuthStateChanged } from "firebase/auth";
 
 interface Transaction {
     id: string;
@@ -33,17 +39,18 @@ const Dashboard: React.FC = () => {
     const [names, setNames] = useState<string[]>([]);
     const [loading, setLoading] = useState(true);
 
-    // Fetch Users for Dropdown
+    // 1. Fetch Users from: groups -> "no groupcest" -> users
     useEffect(() => {
         const fetchUsers = async () => {
             try {
-                const docRef = doc(db, "groups", "no groupcest");
-                const docSnap = await getDoc(docRef);
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    const extractedNames = Object.keys(data);
-                    setNames(extractedNames);
-                }
+                // Reference the "users" subcollection under the "no groupcest" document
+                const usersRef = collection(db, "groups", "no groupcest", "users");
+                const querySnapshot = await getDocs(usersRef);
+
+                // Each doc's ID is the user's name in your screenshot
+                const extractedNames = querySnapshot.docs.map((docSnap) => docSnap.id);
+
+                setNames(extractedNames);
             } catch (error) {
                 console.error("Error fetching users:", error);
             } finally {
@@ -54,15 +61,21 @@ const Dashboard: React.FC = () => {
         fetchUsers();
     }, []);
 
-    // Fetch Transactions from Firestore
+    // 2. Fetch Transactions from wherever you store them.
+    //    If your transactions are also in the "no groupcest" doc as a "transactions" subcollection,
+    //    you would do: collection(db, "groups", "no groupcest", "transactions")
+    //    Otherwise, if it's a top-level "transactions" collection, use that.
     useEffect(() => {
         const fetchTransactions = async () => {
             try {
+                // Example: top-level "transactions" collection
+                // If yours is nested, update the path accordingly:
+                // const transactionsRef = collection(db, "groups", "no groupcest", "transactions");
                 const transactionsRef = collection(db, "groups", "no groupcest", "transactions");
                 const querySnapshot = await getDocs(transactionsRef);
 
-                const fetchedTransactions: Transaction[] = querySnapshot.docs.map(doc => {
-                    const data = doc.data() as {
+                const fetchedTransactions: Transaction[] = querySnapshot.docs.map((docSnap) => {
+                    const data = docSnap.data() as {
                         date: string;
                         transaction: string;
                         user: string;
@@ -73,16 +86,16 @@ const Dashboard: React.FC = () => {
                         pending?: string[];
                     };
 
-                    // If individualAmount is not stored, compute it.
+                    // Compute individualAmount if missing
                     const involvedCount = data.involved.length;
                     const individualAmount = data.individualAmount
                         ? data.individualAmount
                         : involvedCount > 0
-                        ? (parseFloat(data.amount) / involvedCount).toFixed(2)
-                        : "0.00";
+                            ? (parseFloat(data.amount) / involvedCount).toFixed(2)
+                            : "0.00";
 
                     return {
-                        id: doc.id,
+                        id: docSnap.id,
                         date: data.date,
                         transaction: data.transaction,
                         user: data.user,
@@ -103,23 +116,29 @@ const Dashboard: React.FC = () => {
         fetchTransactions();
     }, []);
 
-    // Listen to Auth State to autofill the user field
+    // 3. Listen for Auth State to fill in the user field
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (user) => {
-            if (user && user.displayName) {
-                const firstName = user.displayName.split(" ")[0];
-                setFormData(prev => ({ ...prev, user: firstName }));
+            if (user) {
+                // Use the full displayName if available, or fallback to email or empty string.
+                const fullName = user.displayName || "";
+                setFormData((prev) => ({
+                    ...prev,
+                    user: fullName,  // Always a string
+                }));
+                console.log(fullName)
             }
         });
         return () => unsubscribe();
     }, []);
 
-    // Set today's date
+    // 4. Set today's date
     useEffect(() => {
         const today = new Date().toISOString().split("T")[0];
-        setFormData(prev => ({ ...prev, date: today }));
+        setFormData((prev) => ({ ...prev, date: today }));
     }, []);
 
+    // 5. Handle Sign Out
     const handleSignOut = async () => {
         try {
             await signOut(auth);
@@ -129,33 +148,36 @@ const Dashboard: React.FC = () => {
         }
     };
 
+    // 6. Handle Input Changes
     const handleInputChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
     ) => {
-        setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+        setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
     };
 
     const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { value, checked } = e.target;
-        setFormData(prev => ({
+        setFormData((prev) => ({
             ...prev,
             involved: checked
                 ? [...prev.involved, value]
-                : prev.involved.filter(name => name !== value),
+                : prev.involved.filter((name) => name !== value),
         }));
     };
 
+    // 7. Add a New Transaction
     const handleSubmit = async () => {
         try {
             const frontedBy = formData.user;
-            const paid = [frontedBy]; // Fronted person automatically in paid
-            const pending = formData.involved.filter(name => name !== frontedBy); // Others in pending
+            const paid = [frontedBy];
+            const pending = formData.involved.filter((name) => name !== frontedBy);
 
-            // Calculate individual amount
+            // Compute individual amount
             const involvedCount = [...paid, ...pending].length;
-            const individualAmount = involvedCount > 0
-                ? (parseFloat(formData.amount) / involvedCount).toFixed(2)
-                : "0.00";
+            const individualAmount =
+                involvedCount > 0
+                    ? (parseFloat(formData.amount) / involvedCount).toFixed(2)
+                    : "0.00";
 
             const newTransaction = {
                 date: formData.date,
@@ -165,26 +187,37 @@ const Dashboard: React.FC = () => {
                 user: frontedBy,
                 involved: [...paid, ...pending],
                 paid,
-                pending
+                pending,
             };
 
-            // Save to Firestore inside `transactions` collection of `no groupcest`
-            const docRef = await addDoc(collection(db, "groups", "no groupcest", "transactions"), newTransaction);
-            console.log("Transaction added with ID: ", docRef.id);
+            // Save to Firestore
+            // Again, if your transactions are in a subcollection of "no groupcest",
+            // you can do: addDoc(collection(db, "groups", "no groupcest", "transactions"), newTransaction)
+            const docRef = await addDoc(
+                collection(db, "groups", "no groupcest", "transactions"),
+                newTransaction
+            );
 
-            // Update local state with the new transaction including its id.
-            setTransactions(prev => [
+            console.log("Transaction added with ID:", docRef.id);
+
+            // Update local state
+            setTransactions((prev) => [
                 ...prev,
                 {
                     ...newTransaction,
                     id: docRef.id,
-                }
+                },
             ]);
 
             setShowModal(false);
-            setFormData(prev => ({ ...prev, transaction: "", amount: "", involved: [] }));
+            setFormData((prev) => ({
+                ...prev,
+                transaction: "",
+                amount: "",
+                involved: [],
+            }));
         } catch (error) {
-            console.error("Error adding transaction: ", error);
+            console.error("Error adding transaction:", error);
         }
     };
 
@@ -196,7 +229,7 @@ const Dashboard: React.FC = () => {
             <h1 className="mb-4">Dashboard</h1>
 
             <Card className="p-4 shadow-lg text-center w-100">
-                <p>Welcome to No Groupcest!</p>
+                <p>Welcome to the Payment Tracker!</p>
                 <Button variant="primary" className="mb-3" onClick={() => setShowModal(true)}>
                     Add Transaction
                 </Button>
@@ -204,7 +237,7 @@ const Dashboard: React.FC = () => {
                     Sign Out
                 </Button>
 
-                {/* Transaction Table Component */}
+                {/* Transaction Table */}
                 <TransactionTable transactions={transactions} names={names} />
             </Card>
 

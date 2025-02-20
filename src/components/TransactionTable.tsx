@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Table, Button } from "react-bootstrap";
+import { Table } from "react-bootstrap";
 import { auth, db, doc, updateDoc, deleteDoc } from "../firebaseConfig";
 
 interface TransactionTableProps {
@@ -18,11 +18,11 @@ interface TransactionTableProps {
 }
 
 const TransactionTable: React.FC<TransactionTableProps> = ({ transactions, names }) => {
-    const currentUser = auth.currentUser?.displayName?.split(" ")[0] || "";
+    const currentUser = auth.currentUser?.displayName || "";
     // Create a local copy of transactions for immediate UI updates.
     const [localTransactions, setLocalTransactions] = useState(transactions);
 
-    // Whenever the prop "transactions" changes, update the local copy.
+    // Update local transactions if the prop changes.
     useEffect(() => {
         setLocalTransactions(transactions);
     }, [transactions]);
@@ -135,14 +135,21 @@ const TransactionTable: React.FC<TransactionTableProps> = ({ transactions, names
                         <td>${row.individualAmount}</td>
                         <td>{row.user}</td>
                         {names.map((name, idx) => {
-                            const isPaid = row.paid.includes(name);
-                            const isPending = row.pending.includes(name);
+                            // Determine if the current cell is for the fronted person.
                             const isFrontedPerson = row.user === name;
+                            // Always mark the fronted person as paid.
+                            const isPaid = isFrontedPerson || row.paid.includes(name);
+                            const isPending = row.pending.includes(name);
+
                             return (
                                 <td
                                     key={idx}
                                     style={{
                                         cursor:
+                                            // Only allow toggling if:
+                                            // - The current logged-in user is the fronted person for the transaction,
+                                            // - The clicked name is part of the involved list,
+                                            // - And the cell is not for the fronted person.
                                             row.user === currentUser && row.involved.includes(name) && !isFrontedPerson
                                                 ? "pointer"
                                                 : "default",
@@ -157,11 +164,12 @@ const TransactionTable: React.FC<TransactionTableProps> = ({ transactions, names
                                     }}
                                     title={name}
                                     onClick={() => {
-                                        // Allow toggling only if the logged-in user is the fronted person,
-                                        // the name is in the involved list,
-                                        // and the name is NOT the fronted person's name.
-                                        if (row.user === currentUser && row.involved.includes(name) && !isFrontedPerson) {
-                                            handleTogglePayment(row.id, name, isPaid);
+                                        if (
+                                            row.user === currentUser &&
+                                            row.involved.includes(name) &&
+                                            !isFrontedPerson
+                                        ) {
+                                            handleTogglePayment(row.id, name, row.paid.includes(name));
                                         }
                                     }}
                                 >

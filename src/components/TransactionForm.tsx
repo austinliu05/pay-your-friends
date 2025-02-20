@@ -82,7 +82,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
             <Form.Group className="mb-3">
                 <Form.Label>Select Friends Involved</Form.Label>
                 {names
-                    .filter((name) => name.split(" ")[0] !== formData.user)
+                    .filter((name) => name !== formData.user)
                     .map((name, index) => (
                         <Form.Check
                             key={index}

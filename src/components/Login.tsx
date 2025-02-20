@@ -1,25 +1,27 @@
 import React, { useState, useEffect } from "react";
-import { auth, provider, signInWithPopup, signOut, db, doc, getDoc } from "../firebaseConfig";
+import { auth, provider, signInWithPopup, signOut, db } from "../firebaseConfig";
 import { Container, Card, Button, Image, Alert } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
+import { collection, getDocs } from "firebase/firestore";
 
 const Login: React.FC = () => {
     const [user, setUser] = useState<{ name: string; email: string; photo: string } | null>(null);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const navigate = useNavigate();
 
-    // Function to check if user is in Firestore document
+    // Function to check if the user's email is present in any document of the "users" subcollection
     const checkUserInFirestore = async (email: string) => {
         try {
-            const docRef = doc(db, "groups", "no groupcest"); // Reference to the document
-            const docSnap = await getDoc(docRef); // Fetch document data
-            
-            if (docSnap.exists()) {
+            const usersCollectionRef = collection(db, "groups", "no groupcest", "users");
+            const querySnapshot = await getDocs(usersCollectionRef);
+            let found = false;
+            querySnapshot.forEach((docSnap) => {
                 const data = docSnap.data();
-                if (Object.values(data).includes(email)) {
-                    return true; // User email found
+                if (data.email === email) {
+                    found = true;
                 }
-            }
+            });
+            return found;
         } catch (error) {
             console.error("Firestore error:", error);
         }
@@ -31,13 +33,12 @@ const Login: React.FC = () => {
             if (user) {
                 const email = user.email || "";
                 const isUserInGroup = await checkUserInFirestore(email);
-                
                 if (isUserInGroup) {
                     setUser({ name: user.displayName || "", email, photo: user.photoURL || "" });
                     navigate("/dashboard");
                 } else {
                     setErrorMessage("You are not authorized to access this group.");
-                    await signOut(auth); // Sign out unauthorized users
+                    await signOut(auth);
                 }
             }
         });
@@ -48,13 +49,12 @@ const Login: React.FC = () => {
             const result = await signInWithPopup(auth, provider);
             const email = result.user.email || "";
             const isUserInGroup = await checkUserInFirestore(email);
-
             if (isUserInGroup) {
                 setUser({ name: result.user.displayName || "", email, photo: result.user.photoURL || "" });
                 navigate("/dashboard");
             } else {
                 setErrorMessage("You are not authorized to access this group.");
-                await signOut(auth); // Sign out unauthorized users
+                await signOut(auth);
             }
         } catch (error) {
             console.error("Sign-in error:", error);
