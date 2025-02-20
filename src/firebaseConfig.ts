@@ -5,13 +5,13 @@ import { getFirestore, doc, getDoc, collection, addDoc, updateDoc, getDocs} from
 
 // Your Firebase config (replace with your actual config)
 const firebaseConfig = {
-    apiKey: "AIzaSyDC1BmxyV479VOEBQFsQGyGmMzLCaTux1U",
-    authDomain: "pay-your-friend.firebaseapp.com",
-    projectId: "pay-your-friend",
-    storageBucket: "pay-your-friend.firebasestorage.app",
-    messagingSenderId: "546969495183",
-    appId: "1:546969495183:web:282d63fefda4c9e196b2fa",
-    measurementId: "G-P54LTLDQTK"
+    apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
+    authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
+    projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
+    storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
+    appId: process.env.REACT_APP_FIREBASE_APP_ID,
+    measurementId: process.env.REACT_APP_FIREBASE_MEASUREMENT_ID
 };
 
 // Initialize Firebase
