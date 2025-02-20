@@ -12,8 +12,6 @@ import {
 } from "../firebaseConfig";
 import TransactionTable from "../components/TransactionTable";
 import TransactionForm from "../components/TransactionForm";
-// Removed direct Analytics import since we are now routing to it
-// import Analytics from "./Analytics";
 
 interface Transaction {
     id: string;
@@ -138,6 +136,7 @@ const Dashboard: React.FC = () => {
     ) => {
         setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
     };
+
     const handleSelectAllChange = (selected: boolean) => {
         const friendNames = names.filter((name) => name !== formData.user);
         setFormData((prev) => ({
@@ -184,7 +183,6 @@ const Dashboard: React.FC = () => {
                 newTransaction
             );
 
-            console.log("Transaction added with ID:", docRef.id);
             setTransactions((prev) => [
                 ...prev,
                 { ...newTransaction, id: docRef.id },
@@ -212,7 +210,7 @@ const Dashboard: React.FC = () => {
             >
                 <h1 className="mb-4">Dashboard</h1>
                 <Card className="p-4 shadow-lg text-center">
-                    <p>Welcome to No Groupcest!</p>
+                    <p>Welcome to No Groupcest {formData.user || "No Groupcest User"}!</p>
                     <Button variant="primary" className="mb-3" onClick={() => setShowModal(true)}>
                         Add Transaction
                     </Button>
