@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Table } from "react-bootstrap";
+import { Table, OverlayTrigger, Tooltip } from "react-bootstrap";
 import { auth, db, doc, updateDoc, deleteDoc } from "../firebaseConfig";
 
 interface TransactionTableProps {
@@ -84,103 +84,126 @@ const TransactionTable: React.FC<TransactionTableProps> = ({ transactions, names
     };
 
     return (
-        <Table striped bordered hover responsive style={{ tableLayout: "fixed", width: "100%" }}>
-            <thead>
-                <tr>
-                    <th style={{ width: "12%" }}>Date</th>
-                    <th style={{ width: "40%" }}>Transaction</th>
-                    <th style={{ width: "10%" }}>Total ($)</th>
-                    <th style={{ width: "10%" }}>Individual ($)</th>
-                    <th style={{ width: "15%" }}>Fronted</th>
-                    {names.map((name, index) => (
-                        <th
-                            key={index}
-                            style={{
-                                width: "10%",
-                                whiteSpace: "nowrap",
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
-                                cursor: "pointer",
-                            }}
-                            title={name}
-                        >
-                            {name.split(" ")[0]}
-                        </th>
-                    ))}
-                </tr>
-            </thead>
-            <tbody>
-                {localTransactions.map((row) => (
-                    <tr key={row.id}>
-                        <td>{row.date}</td>
-                        <td>
-                            {row.transaction}
-                            {/* If the current user is the fronted person, display a delete (×) icon */}
-                            {row.user === currentUser && (
-                                <span
-                                    style={{
-                                        color: "red",
-                                        marginLeft: "8px",
-                                        cursor: "pointer",
-                                        fontWeight: "bold",
-                                    }}
-                                    title="Delete Transaction"
-                                    onClick={() => handleDelete(row.id)}
+        // Wrap the table in a div with table-responsive to enable horizontal scrolling on smaller viewports.
+        <div className="table-responsive">
+            <Table
+                striped
+                bordered
+                hover
+                responsive
+                style={{
+                    tableLayout: "fixed",
+                    width: "100%",
+                    minWidth: "1000px", // Set minimum width to 1000px
+                }}
+            >
+                <thead>
+                    <tr>
+                        <th style={{ width: "12%" }}>Date</th>
+                        <th style={{ width: "40%" }}>Transaction</th>
+                        <th style={{ width: "10%" }}>Total ($)</th>
+                        <th style={{ width: "10%" }}>Individual ($)</th>
+                        <th style={{ width: "15%" }}>Fronted</th>
+                        {names.map((name, index) => (
+                            <th
+                                key={index}
+                                style={{
+                                    width: "10%",
+                                    whiteSpace: "nowrap",
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                    cursor: "pointer",
+                                }}
+                            >
+                                {/* Wrap the header text in an OverlayTrigger for a tooltip */}
+                                <OverlayTrigger
+                                    placement="top"
+                                    delay={{ show: 250, hide: 400 }}
+                                    overlay={<Tooltip id={`tooltip-header-${index}`}>{name}</Tooltip>}
+                                    trigger={['hover', 'focus', 'click']}
                                 >
-                                    ×
-                                </span>
-                            )}
-                        </td>
-                        <td>${row.amount}</td>
-                        <td>${row.individualAmount}</td>
-                        <td>{row.user}</td>
-                        {names.map((name, idx) => {
-                            // Determine if the current cell is for the fronted person.
-                            const isFrontedPerson = row.user === name;
-                            // Always mark the fronted person as paid.
-                            const isPaid = isFrontedPerson || row.paid.includes(name);
-                            const isPending = row.pending.includes(name);
-
-                            return (
-                                <td
-                                    key={idx}
-                                    style={{
-                                        cursor:
-                                            // Only allow toggling if:
-                                            // - The current logged-in user is the fronted person for the transaction,
-                                            // - The clicked name is part of the involved list,
-                                            // - And the cell is not for the fronted person.
-                                            row.user === currentUser && row.involved.includes(name) && !isFrontedPerson
-                                                ? "pointer"
-                                                : "default",
-                                        backgroundColor: isPaid
-                                            ? "#d4edda" // Light green for paid
-                                            : isPending
-                                            ? "#fff3cd" // Light yellow for pending
-                                            : "inherit",
-                                        whiteSpace: "nowrap",
-                                        overflow: "hidden",
-                                        textOverflow: "ellipsis",
-                                    }}
-                                    title={name}
-                                    onClick={() => {
-                                        if (
-                                            row.user === currentUser &&
-                                            row.involved.includes(name) &&
-                                            !isFrontedPerson
-                                        ) {
-                                            handleTogglePayment(row.id, name, row.paid.includes(name));
-                                        }
-                                    }}
-                                >
-                                    {isPaid ? "✔️" : isPending ? "Pending" : ""}
-                                </td>
-                            );
-                        })}
+                                    <span>{name.split(" ")[0]}</span>
+                                </OverlayTrigger>
+                            </th>
+                        ))}
                     </tr>
-                ))}
-            </tbody>
-        </Table>
+                </thead>
+                <tbody>
+                    {localTransactions.map((row) => (
+                        <tr key={row.id}>
+                            <td>{row.date}</td>
+                            <td>
+                                {row.transaction}
+                                {/* If the current user is the fronted person, display a delete (×) icon */}
+                                {row.user === currentUser && (
+                                    <span
+                                        style={{
+                                            color: "red",
+                                            marginLeft: "8px",
+                                            cursor: "pointer",
+                                            fontWeight: "bold",
+                                        }}
+                                        title="Delete Transaction"
+                                        onClick={() => handleDelete(row.id)}
+                                    >
+                                        ×
+                                    </span>
+                                )}
+                            </td>
+                            <td>${row.amount}</td>
+                            <td>${row.individualAmount}</td>
+                            <td>{row.user}</td>
+                            {names.map((name, idx) => {
+                                const isFrontedPerson = row.user === name;
+                                const isPaid = isFrontedPerson || row.paid.includes(name);
+                                const isPending = row.pending.includes(name);
+
+                                return (
+                                    <td
+                                        key={idx}
+                                        style={{
+                                            cursor:
+                                                row.user === currentUser && row.involved.includes(name) && !isFrontedPerson
+                                                    ? "pointer"
+                                                    : "default",
+                                            backgroundColor: isPaid
+                                                ? "#d4edda" // Light green for paid
+                                                : isPending
+                                                ? "#fff3cd" // Light yellow for pending
+                                                : "inherit",
+                                            whiteSpace: "nowrap",
+                                            overflow: "hidden",
+                                            textOverflow: "ellipsis",
+                                        }}
+                                        // Wrap the cell content in an OverlayTrigger for a tooltip
+                                        onClick={() => {
+                                            if (
+                                                row.user === currentUser &&
+                                                row.involved.includes(name) &&
+                                                !isFrontedPerson
+                                            ) {
+                                                handleTogglePayment(row.id, name, row.paid.includes(name));
+                                            }
+                                        }}
+                                    >
+                                        <OverlayTrigger
+                                            placement="top"
+                                            delay={{ show: 250, hide: 400 }}
+                                            overlay={<Tooltip id={`tooltip-cell-${row.id}-${idx}`}>{name}</Tooltip>}
+                                            trigger={['hover', 'focus', 'click']}
+                                        >
+                                            <div>
+                                                {isPaid ? "✔️" : isPending ? "Pending" : ""}
+                                            </div>
+                                        </OverlayTrigger>
+                                    </td>
+                                );
+                            })}
+                        </tr>
+                    ))}
+                </tbody>
+            </Table>
+        </div>
     );
 };
 

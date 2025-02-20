@@ -43,13 +43,9 @@ const Dashboard: React.FC = () => {
     useEffect(() => {
         const fetchUsers = async () => {
             try {
-                // Reference the "users" subcollection under the "no groupcest" document
                 const usersRef = collection(db, "groups", "no groupcest", "users");
                 const querySnapshot = await getDocs(usersRef);
-
-                // Each doc's ID is the user's name in your screenshot
                 const extractedNames = querySnapshot.docs.map((docSnap) => docSnap.id);
-
                 setNames(extractedNames);
             } catch (error) {
                 console.error("Error fetching users:", error);
@@ -61,19 +57,12 @@ const Dashboard: React.FC = () => {
         fetchUsers();
     }, []);
 
-    // 2. Fetch Transactions from wherever you store them.
-    //    If your transactions are also in the "no groupcest" doc as a "transactions" subcollection,
-    //    you would do: collection(db, "groups", "no groupcest", "transactions")
-    //    Otherwise, if it's a top-level "transactions" collection, use that.
+    // 2. Fetch Transactions from: groups -> "no groupcest" -> transactions
     useEffect(() => {
         const fetchTransactions = async () => {
             try {
-                // Example: top-level "transactions" collection
-                // If yours is nested, update the path accordingly:
-                // const transactionsRef = collection(db, "groups", "no groupcest", "transactions");
                 const transactionsRef = collection(db, "groups", "no groupcest", "transactions");
                 const querySnapshot = await getDocs(transactionsRef);
-
                 const fetchedTransactions: Transaction[] = querySnapshot.docs.map((docSnap) => {
                     const data = docSnap.data() as {
                         date: string;
@@ -85,8 +74,6 @@ const Dashboard: React.FC = () => {
                         paid?: string[];
                         pending?: string[];
                     };
-
-                    // Compute individualAmount if missing
                     const involvedCount = data.involved.length;
                     const individualAmount = data.individualAmount
                         ? data.individualAmount
@@ -120,13 +107,8 @@ const Dashboard: React.FC = () => {
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (user) => {
             if (user) {
-                // Use the full displayName if available, or fallback to email or empty string.
                 const fullName = user.displayName || "";
-                setFormData((prev) => ({
-                    ...prev,
-                    user: fullName,  // Always a string
-                }));
-                console.log(fullName)
+                setFormData((prev) => ({ ...prev, user: fullName }));
             }
         });
         return () => unsubscribe();
@@ -154,6 +136,13 @@ const Dashboard: React.FC = () => {
     ) => {
         setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
     };
+    const handleSelectAllChange = (selected: boolean) => {
+        const friendNames = names.filter((name) => name !== formData.user);
+        setFormData((prev) => ({
+            ...prev,
+            involved: selected ? friendNames : [],
+        }));
+    };
 
     const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { value, checked } = e.target;
@@ -171,8 +160,6 @@ const Dashboard: React.FC = () => {
             const frontedBy = formData.user;
             const paid = [frontedBy];
             const pending = formData.involved.filter((name) => name !== frontedBy);
-
-            // Compute individual amount
             const involvedCount = [...paid, ...pending].length;
             const individualAmount =
                 involvedCount > 0
@@ -190,23 +177,15 @@ const Dashboard: React.FC = () => {
                 pending,
             };
 
-            // Save to Firestore
-            // Again, if your transactions are in a subcollection of "no groupcest",
-            // you can do: addDoc(collection(db, "groups", "no groupcest", "transactions"), newTransaction)
             const docRef = await addDoc(
                 collection(db, "groups", "no groupcest", "transactions"),
                 newTransaction
             );
 
             console.log("Transaction added with ID:", docRef.id);
-
-            // Update local state
             setTransactions((prev) => [
                 ...prev,
-                {
-                    ...newTransaction,
-                    id: docRef.id,
-                },
+                { ...newTransaction, id: docRef.id },
             ]);
 
             setShowModal(false);
@@ -222,46 +201,51 @@ const Dashboard: React.FC = () => {
     };
 
     return (
-        <Container
-            className="d-flex flex-column align-items-center justify-content-start vh-100 mt-4"
-            style={{ width: "100vw", maxWidth: "100%" }}
-        >
-            <h1 className="mb-4">Dashboard</h1>
+        <>
+            {/* Main Dashboard Container */}
+            <Container
+                className="d-flex flex-column align-items-center justify-content-start mt-4"
+                style={{ width: "100vw", maxWidth: "100%" }}
+            >
+                <h1 className="mb-4">Dashboard</h1>
+                <Card className="p-4 shadow-lg text-center w-100">
+                    <p>Welcome to the Payment Tracker!</p>
+                    <Button variant="primary" className="mb-3" onClick={() => setShowModal(true)}>
+                        Add Transaction
+                    </Button>
+                    <Button variant="danger" onClick={handleSignOut} className="mb-3">
+                        Sign Out
+                    </Button>
+                </Card>
 
-            <Card className="p-4 shadow-lg text-center w-100">
-                <p>Welcome to the Payment Tracker!</p>
-                <Button variant="primary" className="mb-3" onClick={() => setShowModal(true)}>
-                    Add Transaction
-                </Button>
-                <Button variant="danger" onClick={handleSignOut} className="mb-3">
-                    Sign Out
-                </Button>
+                {/* Transaction Modal */}
+                <Modal show={showModal} onHide={() => setShowModal(false)}>
+                    <Modal.Header closeButton>
+                        <Modal.Title>Add New Transaction</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body>
+                        {loading ? (
+                            <Spinner animation="border" />
+                        ) : (
+                            <TransactionForm
+                                formData={formData}
+                                names={names}
+                                onInputChange={handleInputChange}
+                                onCheckboxChange={handleCheckboxChange}
+                                onSelectAllChange={handleSelectAllChange}
+                                onSubmit={handleSubmit}
+                                onCancel={() => setShowModal(false)}
+                            />
+                        )}
+                    </Modal.Body>
+                </Modal>
+            </Container>
 
-                {/* Transaction Table */}
+            {/* Separate Container for Transaction Table */}
+            <Container className="mt-4" style={{ width: "100vw", maxWidth: "100%" }}>
                 <TransactionTable transactions={transactions} names={names} />
-            </Card>
-
-            {/* Transaction Modal */}
-            <Modal show={showModal} onHide={() => setShowModal(false)}>
-                <Modal.Header closeButton>
-                    <Modal.Title>Add New Transaction</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                    {loading ? (
-                        <Spinner animation="border" />
-                    ) : (
-                        <TransactionForm
-                            formData={formData}
-                            names={names}
-                            onInputChange={handleInputChange}
-                            onCheckboxChange={handleCheckboxChange}
-                            onSubmit={handleSubmit}
-                            onCancel={() => setShowModal(false)}
-                        />
-                    )}
-                </Modal.Body>
-            </Modal>
-        </Container>
+            </Container>
+        </>
     );
 };
 

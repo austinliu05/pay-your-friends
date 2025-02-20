@@ -6,6 +6,7 @@ interface TransactionFormProps {
     names: string[];
     onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
     onCheckboxChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    onSelectAllChange: (selected: boolean) => void;
     onSubmit: () => void;
     onCancel: () => void;
 }
@@ -15,37 +16,51 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
     names,
     onInputChange,
     onCheckboxChange,
+    onSelectAllChange,
     onSubmit,
     onCancel,
 }) => {
-    // Calculate the individual amount: total amount divided by (number of friends involved + 1 for the fronted person)
     const individualAmount =
         formData.amount && !isNaN(parseFloat(formData.amount))
             ? (parseFloat(formData.amount) / (formData.involved.length + 1)).toFixed(2)
             : "0.00";
 
+    const friendNames = names.filter((name) => name !== formData.user);
+    const allSelected = friendNames.every((name) => formData.involved.includes(name));
+
+    // Wrap your onSubmit prop so it doesn't conflict with form validation
+    const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        const form = e.currentTarget;
+        if (form.checkValidity()) {
+            // If the form is valid, call your provided onSubmit
+            onSubmit();
+        }
+        // If the form is invalid, the browser will display validation messages.
+    };
+
     return (
-        <Form>
+        <Form onSubmit={handleFormSubmit}>
             <Form.Group className="mb-3">
                 <Form.Label>Your Name</Form.Label>
-                {/* Autofilled and disabled */}
                 <Form.Control
                     type="text"
                     name="user"
                     value={formData.user}
                     onChange={onInputChange as React.ChangeEventHandler<any>}
                     disabled
+                    required
                 />
             </Form.Group>
 
             <Form.Group className="mb-3">
                 <Form.Label>Date</Form.Label>
-                {/* Preset with today's date */}
                 <Form.Control
                     type="date"
                     name="date"
                     value={formData.date}
                     onChange={onInputChange as React.ChangeEventHandler<any>}
+                    required
                 />
             </Form.Group>
 
@@ -56,6 +71,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                     name="transaction"
                     value={formData.transaction}
                     onChange={onInputChange as React.ChangeEventHandler<any>}
+                    required
                 />
             </Form.Group>
 
@@ -66,6 +82,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                     name="amount"
                     value={formData.amount}
                     onChange={onInputChange as React.ChangeEventHandler<any>}
+                    required
                 />
             </Form.Group>
 
@@ -76,30 +93,36 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                     name="individualAmount"
                     value={individualAmount}
                     disabled
+                    required
                 />
             </Form.Group>
 
             <Form.Group className="mb-3">
                 <Form.Label>Select Friends Involved</Form.Label>
-                {names
-                    .filter((name) => name !== formData.user)
-                    .map((name, index) => (
-                        <Form.Check
-                            key={index}
-                            type="checkbox"
-                            label={name}
-                            value={name}
-                            checked={formData.involved.includes(name)}
-                            onChange={onCheckboxChange}
-                        />
-                    ))}
+                <Form.Check
+                    type="checkbox"
+                    label="Select All"
+                    checked={allSelected}
+                    onChange={(e) => onSelectAllChange(e.target.checked)}
+                    className="mb-2"
+                />
+                {friendNames.map((name, index) => (
+                    <Form.Check
+                        key={index}
+                        type="checkbox"
+                        label={name}
+                        value={name}
+                        checked={formData.involved.includes(name)}
+                        onChange={onCheckboxChange}
+                    />
+                ))}
             </Form.Group>
 
             <div className="d-flex justify-content-between">
                 <Button variant="secondary" onClick={onCancel}>
                     Cancel
                 </Button>
-                <Button variant="success" onClick={onSubmit}>
+                <Button variant="success" type="submit">
                     Add Transaction
                 </Button>
             </div>
