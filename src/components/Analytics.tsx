@@ -75,7 +75,7 @@ const Analytics: React.FC = () => {
                     }
                 });
 
-                // Aggregate incomplete payments per user.
+                // Aggregate incomplete payments per user (by count) for total incomplete payments.
                 const incMap: { [key: string]: number } = {};
                 transactions.forEach((t) => {
                     t.involved.forEach((name) => {
@@ -120,35 +120,30 @@ const Analytics: React.FC = () => {
                     ["", 0]
                 );
 
-                // Determine the worst friend using the incMap.
-                const worstEntry = Object.entries(incMap).reduce(
+                // New logic: Determine the worst friend as the user who owes the most.
+                // Sum the individualAmount for each user that is still pending.
+                const owesMap: { [key: string]: number } = {};
+                transactions.forEach((t) => {
+                    const indAmount = parseFloat(t.individualAmount) || 0;
+                    t.pending.forEach((user) => {
+                        owesMap[user] = (owesMap[user] || 0) + indAmount;
+                    });
+                });
+                const worstOwesEntry = Object.entries(owesMap).reduce(
                     (maxEntry, currentEntry) =>
                         currentEntry[1] > maxEntry[1] ? currentEntry : maxEntry,
                     ["", 0]
                 );
-                const worstFriendName = worstEntry[0];
-                // Find the worst friend analytics details if available.
-                const worstFriendData =
-                    Object.values(analyticsMap).find((u) => u.user === worstFriendName) ||
-                    { user: worstFriendName, totalFronted: 0, count: worstEntry[1] };
 
-                // Compute how much the worst friend owes by summing the individualAmount
-                // for each transaction where they are still pending.
-                const worstOwesValue = transactions.reduce((sum, t) => {
-                    if (t.pending.includes(worstFriendName)) {
-                        return sum + (parseFloat(t.individualAmount) || 0);
-                    }
-                    return sum;
-                }, 0);
-
+                // Update state.
                 setAnalytics(Object.values(analyticsMap));
                 setIncompleteMap(incMap);
                 setTotalIncomplete(totalInc);
                 setBestFriend(bestFriendData);
-                setWorstFriend(worstFriendData);
+                setWorstFriend({ user: worstOwesEntry[0], totalFronted: 0, count: 0 });
                 setMonthlySpending(monthlyTotal);
                 setBiggestSpender({ user: biggestSpenderEntry[0], totalSpent: biggestSpenderEntry[1] });
-                setWorstOwes(worstOwesValue);
+                setWorstOwes(worstOwesEntry[1]);
                 setLoading(false);
             } catch (error) {
                 console.error("Error fetching transactions:", error);
@@ -249,9 +244,8 @@ const Analytics: React.FC = () => {
                             >
                                 <h5>Worst Friend</h5>
                                 <h3 className="fw-bold">
-                                    {worstFriend?.user} ({incompleteMap[worstFriend?.user || ""]})
+                                    {worstFriend?.user} (${worstOwes.toFixed(2)})
                                 </h3>
-                                <small>Owes: ${worstOwes.toFixed(2)}</small>
                             </Card>
                         </Col>
                         <Col xs={12} sm={6} md={3}>
@@ -295,7 +289,6 @@ const Analytics: React.FC = () => {
                             )}
                         </Col>
                     </Row>
-
 
                     {/* Pie Charts Section */}
                     <Row className="g-4">
