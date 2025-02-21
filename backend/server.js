@@ -9,7 +9,7 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 app.get('/', async (req, res) => {
-    res.send("Welcome to Pay Your Friends backend!")
+    res.send("Welcome to Pay Your Friends!")
 });
 // --- Test Email Endpoint ---
 app.get('/send-test-email', async (req, res) => {
