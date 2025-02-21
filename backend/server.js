@@ -8,6 +8,9 @@ const admin = require('./firebase'); // firebase.js initializes Firebase Admin S
 const app = express();
 const port = process.env.PORT || 3000;
 
+app.get('/', async (req, res) => {
+    res.send("Welcome to Pay Your Friends backend!")
+});
 // --- Test Email Endpoint ---
 app.get('/send-test-email', async (req, res) => {
     try {
