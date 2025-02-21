@@ -243,9 +243,8 @@ const Analytics: React.FC = () => {
                                 style={{ height: "200px" }}
                             >
                                 <h5>Worst Friend</h5>
-                                <h3 className="fw-bold">
-                                    {worstFriend?.user} (${worstOwes.toFixed(2)})
-                                </h3>
+                                <h3 className="fw-bold">{worstFriend?.user}</h3>
+                                <p className="mb-0">Owes: ${worstOwes.toFixed(2)}</p>
                             </Card>
                         </Col>
                         <Col xs={12} sm={6} md={3}>
@@ -255,9 +254,8 @@ const Analytics: React.FC = () => {
                                     style={{ height: "200px" }}
                                 >
                                     <h5>Best Friend</h5>
-                                    <h3 className="fw-bold">
-                                        {bestFriend.user} (${bestFriend.totalFronted.toFixed(2)})
-                                    </h3>
+                                    <h3 className="fw-bold">{bestFriend.user}</h3>
+                                    <p className="mb-0">Fronted: ${bestFriend.totalFronted.toFixed(2)}</p>
                                 </Card>
                             )}
                         </Col>
