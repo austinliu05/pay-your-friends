@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Container, Row, Col, Card, Spinner, Button } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import { db, collection, getDocs } from "../firebaseConfig";
+// @ts-ignore
 import { Pie } from "react-chartjs-2";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
 

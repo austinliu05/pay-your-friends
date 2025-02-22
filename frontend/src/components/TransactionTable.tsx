@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Table, OverlayTrigger, Tooltip, Button } from "react-bootstrap";
 import { auth, db, doc, updateDoc, deleteDoc } from "../firebaseConfig";
+import { useUser } from "../contexts/UserContext";
 
 interface TransactionTableProps {
     transactions: {
@@ -19,6 +20,9 @@ interface TransactionTableProps {
 
 const TransactionTable: React.FC<TransactionTableProps> = ({ transactions, names }) => {
     const currentUser = auth.currentUser?.displayName || "";
+    const { user } = useUser(); // Retrieve user context (including group)
+    const group = user.group; // Use the group from context
+
     // Local copy of transactions for immediate UI updates.
     const [localTransactions, setLocalTransactions] = useState(transactions);
     // State to control sort direction: "desc" for newest-to-oldest, "asc" for oldest-to-newest.
@@ -37,7 +41,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({ transactions, names
     // Toggle payment status when clicking on a user's name in a given transaction.
     const handleTogglePayment = async (transactionId: string, name: string, isPaid: boolean) => {
         try {
-            const transactionRef = doc(db, "groups", "no groupcest", "transactions", transactionId);
+            const transactionRef = doc(db, "groups", group, "transactions", transactionId);
             const transaction = localTransactions.find(t => t.id === transactionId);
             if (!transaction) return;
 
@@ -81,7 +85,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({ transactions, names
     // Delete a transaction.
     const handleDelete = async (transactionId: string) => {
         try {
-            const transactionRef = doc(db, "groups", "no groupcest", "transactions", transactionId);
+            const transactionRef = doc(db, "groups", group, "transactions", transactionId);
             await deleteDoc(transactionRef);
             console.log(`Transaction ${transactionId} deleted successfully.`);
             setLocalTransactions(prev => prev.filter(t => t.id !== transactionId));
@@ -191,8 +195,8 @@ const TransactionTable: React.FC<TransactionTableProps> = ({ transactions, names
                                                     backgroundColor: isPaid
                                                         ? "#d4edda"
                                                         : isPending
-                                                        ? "#fff3cd"
-                                                        : "inherit",
+                                                            ? "#fff3cd"
+                                                            : "inherit",
                                                     whiteSpace: "nowrap",
                                                 }}
                                                 onClick={() => {

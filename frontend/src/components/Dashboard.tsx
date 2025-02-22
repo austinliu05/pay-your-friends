@@ -5,13 +5,13 @@ import { signOut, onAuthStateChanged } from "firebase/auth";
 import {
     auth,
     db,
-    doc,
     collection,
     addDoc,
     getDocs,
 } from "../firebaseConfig";
 import TransactionTable from "../components/TransactionTable";
 import TransactionForm from "../components/TransactionForm";
+import { useUser } from "../contexts/UserContext";
 
 interface Transaction {
     id: string;
@@ -27,6 +27,8 @@ interface Transaction {
 
 const Dashboard: React.FC = () => {
     const navigate = useNavigate();
+    const { user } = useUser();
+    const group = user.group;
     const [showModal, setShowModal] = useState(false);
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [formData, setFormData] = useState({
@@ -39,11 +41,12 @@ const Dashboard: React.FC = () => {
     const [names, setNames] = useState<string[]>([]);
     const [loading, setLoading] = useState(true);
 
-    // 1. Fetch Users from: groups -> "no groupcest" -> users
+    // 1. Fetch Users from: groups -> [group] -> users
     useEffect(() => {
         const fetchUsers = async () => {
+            if (!group) return;
             try {
-                const usersRef = collection(db, "groups", "no groupcest", "users");
+                const usersRef = collection(db, "groups", group, "users");
                 const querySnapshot = await getDocs(usersRef);
                 const extractedNames = querySnapshot.docs.map((docSnap) => docSnap.id);
                 setNames(extractedNames);
@@ -55,13 +58,14 @@ const Dashboard: React.FC = () => {
         };
 
         fetchUsers();
-    }, []);
+    }, [group]);
 
-    // 2. Fetch Transactions from: groups -> "no groupcest" -> transactions
+    // 2. Fetch Transactions from: groups -> [group] -> transactions
     useEffect(() => {
         const fetchTransactions = async () => {
+            if (!group) return;
             try {
-                const transactionsRef = collection(db, "groups", "no groupcest", "transactions");
+                const transactionsRef = collection(db, "groups", group, "transactions");
                 const querySnapshot = await getDocs(transactionsRef);
                 const fetchedTransactions: Transaction[] = querySnapshot.docs.map((docSnap) => {
                     const data = docSnap.data() as {
@@ -101,13 +105,13 @@ const Dashboard: React.FC = () => {
         };
 
         fetchTransactions();
-    }, []);
+    }, [group]);
 
     // 3. Listen for Auth State to fill in the user field
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
-            if (user) {
-                const fullName = user.displayName || "";
+        const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+            if (firebaseUser) {
+                const fullName = firebaseUser.displayName || "";
                 setFormData((prev) => ({ ...prev, user: fullName }));
             }
         });
@@ -179,7 +183,7 @@ const Dashboard: React.FC = () => {
             };
 
             const docRef = await addDoc(
-                collection(db, "groups", "no groupcest", "transactions"),
+                collection(db, "groups", group, "transactions"),
                 newTransaction
             );
 
@@ -195,7 +199,8 @@ const Dashboard: React.FC = () => {
                 amount: "",
                 involved: [],
             }));
-            window.location.reload();
+            // Remove the reload; the state update above should update the UI.
+            // window.location.reload();
         } catch (error) {
             console.error("Error adding transaction:", error);
         }
@@ -210,7 +215,7 @@ const Dashboard: React.FC = () => {
             >
                 <h1 className="mb-4">Dashboard</h1>
                 <Card className="p-4 shadow-lg text-center">
-                    <p>Welcome to No Groupcest {formData.user || "No Groupcest User"}!</p>
+                    <p>Welcome to {group} {formData.user}!</p>
                     <Button variant="primary" className="mb-3" onClick={() => setShowModal(true)}>
                         Add Transaction
                     </Button>
