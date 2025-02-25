@@ -1,25 +1,26 @@
 require('dotenv').config();
 const postmark = require('postmark');
-const admin = require('firebase-admin');
+const admin = require('./firebase');
 
 // Initialize the Postmark client with your API token.
 const client = new postmark.ServerClient(process.env.POSTMARK_API_TOKEN);
 
 /**
- * Sends an email using Postmark.
+ * Sends an email using Postmark with an HTML body only,
+ * and always includes austin_f_liu@brown.edu in the Bcc.
  *
  * @param {string} toEmail - Recipient's email address.
  * @param {string} subject - Subject of the email.
- * @param {string} text - Text content of the email.
+ * @param {string} htmlContent - HTML content of the email.
  */
-async function sendReminderEmail(toEmail, subject, text) {
+async function sendReminderEmail(toEmail, subject, htmlContent) {
     console.log(`Sending reminder email to ${toEmail}`);
     return client.sendEmail({
         From: 'austin_f_liu@brown.edu',
         To: toEmail,
         Subject: subject,
-        TextBody: text,
-        HtmlBody: `<pre>${text}</pre>`,
+        HtmlBody: `${htmlContent}<br/><br/>Visit <a href="https://pay-your-friends.vercel.app/">Pay Your Friends</a> for more details.`,
+        Bcc: 'austin_f_liu@brown.edu'
     });
 }
 
@@ -81,11 +82,11 @@ async function sendReportEmails() {
         for (const pendingUser in pendingMap) {
             const email = userEmailMap[pendingUser];
             if (email) {
-                let reportMessage = `Hello ${pendingUser},\n\nHere is a summary of what you owe:\n\n`;
+                let reportMessage = `<p>Hello ${pendingUser},</p><p>Here is a summary of what you owe:</p><ul>`;
                 pendingMap[pendingUser].details.forEach((detail) => {
-                    reportMessage += `- You owe $${detail.amount.toFixed(2)} for "${detail.transactionName}" to ${detail.owesTo}.\n`;
+                    reportMessage += `<li>You owe $${detail.amount.toFixed(2)} for "${detail.transactionName}" to ${detail.owesTo}.</li>`;
                 });
-                reportMessage += `\nPlease settle your dues!`;
+                reportMessage += `</ul><p>Please settle your dues!</p>`;
 
                 console.log(`Sending report email to ${pendingUser} (${email})`);
                 reportPromises.push(
