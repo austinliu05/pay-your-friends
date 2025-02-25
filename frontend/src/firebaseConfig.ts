@@ -1,6 +1,6 @@
 // Import Firebase SDK
 import { initializeApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, setPersistence, browserLocalPersistence } from "firebase/auth";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, setPersistence, browserLocalPersistence, createUserWithEmailAndPassword, updateProfile, signInWithEmailAndPassword } from "firebase/auth";
 import { getFirestore, doc, getDoc, collection, addDoc, updateDoc, getDocs, deleteDoc} from "firebase/firestore";
 
 // Your Firebase config (replace with your actual config)
@@ -24,5 +24,5 @@ const provider = new GoogleAuthProvider();
 const db = getFirestore(app);
 
 
-export { auth, provider, signInWithPopup, signOut, db, doc, getDoc, collection, addDoc, updateDoc, getDocs, deleteDoc};
+export { auth, provider, signInWithPopup, signOut, db, doc, getDoc, collection, addDoc, updateDoc, getDocs, deleteDoc, createUserWithEmailAndPassword, updateProfile, signInWithEmailAndPassword};
 
