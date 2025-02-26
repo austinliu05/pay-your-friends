@@ -1,12 +1,12 @@
 // src/components/Login.tsx
 import React, { useState } from "react";
-import { 
-    auth, 
-    provider, 
-    createUserWithEmailAndPassword, 
-    updateProfile, 
-    signInWithPopup, 
-    signInWithEmailAndPassword 
+import {
+    auth,
+    provider,
+    createUserWithEmailAndPassword,
+    updateProfile,
+    signInWithPopup,
+    signInWithEmailAndPassword
 } from "../firebaseConfig";
 import { Container, Card, Button, Alert, Spinner, Form } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
@@ -84,15 +84,19 @@ const Login: React.FC = () => {
         <Container className="d-flex flex-column align-items-center justify-content-center min-vh-100">
             <Card className="p-4 shadow-lg text-center" style={{ maxWidth: "400px" }}>
                 <h2 className="mb-4">{isSignUp ? "Sign Up" : "Sign In"}</h2>
-                {localError && <Alert variant="danger">{localError}</Alert>}
+                {/* {localError ? (
+                    <Alert variant="danger">{localError}</Alert>
+                ) : (
+                    <div style={{ minHeight: "48px" }}></div>
+                )} */}
                 {isSignUp ? (
                     <>
                         <Form onSubmit={handleSignUp}>
                             <Form.Group className="mb-3" controlId="formName">
                                 <Form.Label>Name</Form.Label>
-                                <Form.Control 
-                                    type="text" 
-                                    placeholder="Enter your name" 
+                                <Form.Control
+                                    type="text"
+                                    placeholder="Enter your name"
                                     name="name"
                                     value={formData.name}
                                     onChange={handleChange}
@@ -101,9 +105,9 @@ const Login: React.FC = () => {
                             </Form.Group>
                             <Form.Group className="mb-3" controlId="formPhone">
                                 <Form.Label>Phone Number</Form.Label>
-                                <Form.Control 
-                                    type="tel" 
-                                    placeholder="Enter your phone number" 
+                                <Form.Control
+                                    type="tel"
+                                    placeholder="Enter your phone number"
                                     name="phone"
                                     value={formData.phone}
                                     onChange={handleChange}
@@ -112,9 +116,9 @@ const Login: React.FC = () => {
                             </Form.Group>
                             <Form.Group className="mb-3" controlId="formEmail">
                                 <Form.Label>Email Address</Form.Label>
-                                <Form.Control 
-                                    type="email" 
-                                    placeholder="Enter your email" 
+                                <Form.Control
+                                    type="email"
+                                    placeholder="Enter your email"
                                     name="email"
                                     value={formData.email}
                                     onChange={handleChange}
@@ -123,29 +127,29 @@ const Login: React.FC = () => {
                             </Form.Group>
                             <Form.Group className="mb-3" controlId="formPassword">
                                 <Form.Label>Password</Form.Label>
-                                <Form.Control 
-                                    type="password" 
-                                    placeholder="Enter your password" 
+                                <Form.Control
+                                    type="password"
+                                    placeholder="Enter your password"
                                     name="password"
                                     value={formData.password}
                                     onChange={handleChange}
                                     required
                                 />
                             </Form.Group>
-                            <Button 
-                                variant="primary" 
-                                type="submit" 
-                                className="w-100" 
+                            <Button
+                                variant="primary"
+                                type="submit"
+                                className="w-100"
                                 disabled={isLoading}
                             >
                                 {isLoading ? (
                                     <>
-                                        <Spinner 
-                                            as="span" 
-                                            animation="border" 
-                                            size="sm" 
-                                            role="status" 
-                                            aria-hidden="true" 
+                                        <Spinner
+                                            as="span"
+                                            animation="border"
+                                            size="sm"
+                                            role="status"
+                                            aria-hidden="true"
                                         />
                                         <span className="ms-2">Signing up...</span>
                                     </>
@@ -155,20 +159,20 @@ const Login: React.FC = () => {
                             </Button>
                         </Form>
                         <hr className="my-3" />
-                        <Button 
-                            variant="outline-danger" 
-                            onClick={handleGoogleAuth} 
+                        <Button
+                            variant="outline-danger"
+                            onClick={handleGoogleAuth}
                             disabled={isLoading}
                             className="w-100"
                         >
                             {isLoading ? (
                                 <>
-                                    <Spinner 
-                                        as="span" 
-                                        animation="border" 
-                                        size="sm" 
-                                        role="status" 
-                                        aria-hidden="true" 
+                                    <Spinner
+                                        as="span"
+                                        animation="border"
+                                        size="sm"
+                                        role="status"
+                                        aria-hidden="true"
                                     />
                                     <span className="ms-2">Processing...</span>
                                 </>
@@ -184,9 +188,9 @@ const Login: React.FC = () => {
                         <Form onSubmit={handleEmailSignIn}>
                             <Form.Group className="mb-3" controlId="formEmail">
                                 <Form.Label>Email Address</Form.Label>
-                                <Form.Control 
-                                    type="email" 
-                                    placeholder="Enter your email" 
+                                <Form.Control
+                                    type="email"
+                                    placeholder="Enter your email"
                                     name="email"
                                     value={formData.email}
                                     onChange={handleChange}
@@ -195,29 +199,29 @@ const Login: React.FC = () => {
                             </Form.Group>
                             <Form.Group className="mb-3" controlId="formPassword">
                                 <Form.Label>Password</Form.Label>
-                                <Form.Control 
-                                    type="password" 
-                                    placeholder="Enter your password" 
+                                <Form.Control
+                                    type="password"
+                                    placeholder="Enter your password"
                                     name="password"
                                     value={formData.password}
                                     onChange={handleChange}
                                     required
                                 />
                             </Form.Group>
-                            <Button 
-                                variant="primary" 
-                                type="submit" 
-                                className="w-100" 
+                            <Button
+                                variant="primary"
+                                type="submit"
+                                className="w-100"
                                 disabled={isLoading}
                             >
                                 {isLoading ? (
                                     <>
-                                        <Spinner 
-                                            as="span" 
-                                            animation="border" 
-                                            size="sm" 
-                                            role="status" 
-                                            aria-hidden="true" 
+                                        <Spinner
+                                            as="span"
+                                            animation="border"
+                                            size="sm"
+                                            role="status"
+                                            aria-hidden="true"
                                         />
                                         <span className="ms-2">Signing in...</span>
                                     </>
@@ -227,20 +231,20 @@ const Login: React.FC = () => {
                             </Button>
                         </Form>
                         <hr className="my-3" />
-                        <Button 
-                            variant="outline-danger" 
-                            onClick={handleGoogleAuth} 
+                        <Button
+                            variant="outline-danger"
+                            onClick={handleGoogleAuth}
                             disabled={isLoading}
                             className="w-100"
                         >
                             {isLoading ? (
                                 <>
-                                    <Spinner 
-                                        as="span" 
-                                        animation="border" 
-                                        size="sm" 
-                                        role="status" 
-                                        aria-hidden="true" 
+                                    <Spinner
+                                        as="span"
+                                        animation="border"
+                                        size="sm"
+                                        role="status"
+                                        aria-hidden="true"
                                     />
                                     <span className="ms-2">Processing...</span>
                                 </>
@@ -253,12 +257,12 @@ const Login: React.FC = () => {
                     </>
                 )}
                 <div className="mt-3">
-                    <Button 
-                        variant="link" 
+                    <Button
+                        variant="link"
                         onClick={() => setIsSignUp(!isSignUp)}
                     >
-                        {isSignUp 
-                            ? "Already have an account? Sign In" 
+                        {isSignUp
+                            ? "Already have an account? Sign In"
                             : "Don't have an account? Sign Up"}
                     </Button>
                 </div>
