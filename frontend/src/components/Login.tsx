@@ -10,6 +10,7 @@ import {
 } from "../firebaseConfig";
 import { Container, Card, Button, Alert, Spinner, Form } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
+import ErrorMessage from "./ErrorMessage";
 
 const Login: React.FC = () => {
     const [localError, setLocalError] = useState<string | null>(null);
@@ -84,11 +85,7 @@ const Login: React.FC = () => {
         <Container className="d-flex flex-column align-items-center justify-content-center min-vh-100">
             <Card className="p-4 shadow-lg text-center" style={{ maxWidth: "400px" }}>
                 <h2 className="mb-4">{isSignUp ? "Sign Up" : "Sign In"}</h2>
-                {/* {localError ? (
-                    <Alert variant="danger">{localError}</Alert>
-                ) : (
-                    <div style={{ minHeight: "48px" }}></div>
-                )} */}
+                {localError && <ErrorMessage error={localError} />}
                 {isSignUp ? (
                     <>
                         <Form onSubmit={handleSignUp}>
