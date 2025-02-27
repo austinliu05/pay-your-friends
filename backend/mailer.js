@@ -20,7 +20,6 @@ async function sendReminderEmail(toEmail, subject, htmlContent) {
         To: toEmail,
         Subject: subject,
         HtmlBody: `${htmlContent}<br/><br/>Visit <a href="https://pay-your-friends.vercel.app/">Pay Your Friends</a> for more details.`,
-        Bcc: 'austin_f_liu@brown.edu'
     });
 }
 
