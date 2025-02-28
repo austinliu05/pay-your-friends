@@ -2,12 +2,16 @@ const express = require('express');
 const { sendReminderEmail, sendReportEmails } = require('./mailer');
 require('dotenv').config();
 const app = express();
+const PORT = process.env.PORT || 3000; // Default to port 3000 if not set
 
 // --- Home Route ---
 app.get('/', async (req, res) => {
     res.send("Welcome to Pay Your Friends!");
 });
-
+// --- Start Express Server ---
+app.listen(PORT, () => {
+    console.log(`🚀 Server is running on http://localhost:${PORT}`);
+});
 // --- Test Email Endpoint ---
 app.get('/send-test-email', async (req, res) => {
     try {
